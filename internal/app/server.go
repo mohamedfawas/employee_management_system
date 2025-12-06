@@ -71,7 +71,6 @@ func (s *Server) initClients(ctx context.Context) error {
 		Password: s.config.Postgres.Password,
 		DBName:   s.config.Postgres.DBName,
 		SSLMode:  s.config.Postgres.SSLMode,
-		TimeZone: s.config.Postgres.TimeZone,
 	}
 
 	pgClient, err := postgresClient.NewClient(postgresCfg)

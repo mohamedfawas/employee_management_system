@@ -17,7 +17,6 @@ type Config struct {
 	Password string
 	DBName   string
 	SSLMode  string
-	TimeZone string
 }
 
 // Client wraps a pgxpool.Pool connection.
@@ -29,14 +28,13 @@ type Client struct {
 // It performs connection pooling, health checks, and timeouts.
 func NewClient(cfg Config) (*Client, error) {
 	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s&TimeZone=%s",
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s&TimeZone=UTC",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,
 		cfg.Port,
 		cfg.DBName,
 		cfg.SSLMode,
-		cfg.TimeZone,
 	)
 
 	// Add connection timeout context
@@ -59,7 +57,7 @@ func NewClient(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to ping PostgreSQL: %w", err)
 	}
 
-	log.Println("✅ Connected to PostgreSQL successfully")
+	log.Println("Connected to PostgreSQL successfully")
 
 	return &Client{Pool: pool}, nil
 }
@@ -68,6 +66,6 @@ func NewClient(cfg Config) (*Client, error) {
 func (c *Client) Close() {
 	if c.Pool != nil {
 		c.Pool.Close()
-		log.Println("🔒 PostgreSQL connection closed")
+		log.Println(" PostgreSQL connection closed")
 	}
 }
