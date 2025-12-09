@@ -1,0 +1,510 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "REST API for Employee Management",
+        "title": "Employee Management API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/employees": {
+            "get": {
+                "description": "Retrieve a list of all employees in the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Get all employees",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GetAllEmployeesResponseWrapper"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new employee and stores it in the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Employees"
+                ],
+                "summary": "Create a new employee",
+                "parameters": [
+                    {
+                        "description": "Employee create payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateEmployeeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateEmployeeResponseWrapper"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/employees/{id}": {
+            "get": {
+                "description": "Fetch a single employee using the ID provided in the URL path",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Employees"
+                ],
+                "summary": "Get employee by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Employee ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GetEmployeeByIdResponseWrapper"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update employee details by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Employees"
+                ],
+                "summary": "Update an employee",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Employee ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update employee payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateEmployeeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateEmployeeResponseWrapper"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Remove an employee record by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "employees"
+                ],
+                "summary": "Delete an employee",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Employee ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apiresponse.StandardResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "apiresponse.ErrorInfo": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "apiresponse.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/apiresponse.ErrorInfo"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.CreateEmployeeRequest": {
+            "type": "object",
+            "properties": {
+                "hired_date": {
+                    "description": "Date when the employee was hired (YYYY-MM-DD)\nexample: 2024-01-15",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Employee full name\nexample: John Doe",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "Job position assigned to the employee\nexample: Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "Monthly salary of the employee\nexample: 60000",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.CreateEmployeeResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "example: 2024-01-15T10:30:00Z",
+                    "type": "string"
+                },
+                "hired_date": {
+                    "description": "example: 2024-01-15",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Employee ID generated by the system\nexample: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "example: John Doe",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "example: Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "example: 60000",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.CreateEmployeeResponseWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/v1.CreateEmployeeResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.GetAllEmployeesResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "example: 2024-01-15T10:30:00Z",
+                    "type": "string"
+                },
+                "hired_date": {
+                    "description": "example: 2024-01-15",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "example: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "example: John Doe",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "example: Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "example: 60000",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.GetAllEmployeesResponseWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.GetAllEmployeesResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.GetEmployeeByIdResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "example: 2024-01-15T10:30:00Z",
+                    "type": "string"
+                },
+                "hired_date": {
+                    "description": "example: 2024-01-15",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "example: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "example: John Doe",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "example: Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "example: 60000",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.GetEmployeeByIdResponseWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/v1.GetEmployeeByIdResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UpdateEmployeeRequest": {
+            "type": "object",
+            "properties": {
+                "hired_date": {
+                    "description": "example: 2024-01-15",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "example: John Doe Updated",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "example: Senior Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "example: 75000",
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.UpdateEmployeeResponse": {
+            "type": "object",
+            "properties": {
+                "hired_date": {
+                    "description": "example: 2024-01-15",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "example: 1",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "example: John Doe Updated",
+                    "type": "string"
+                },
+                "position": {
+                    "description": "example: Senior Software Engineer",
+                    "type": "string"
+                },
+                "salary": {
+                    "description": "example: 75000",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "example: 2024-02-01T12:00:00Z",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UpdateEmployeeResponseWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/v1.UpdateEmployeeResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Config holds PostgreSQL connection parameters.
 type Config struct {
 	Host     string
 	Port     int
@@ -19,14 +17,12 @@ type Config struct {
 	SSLMode  string
 }
 
-// Client wraps a pgxpool.Pool connection.
 type Client struct {
 	Pool *pgxpool.Pool
 }
 
-// NewClient initializes and returns a PostgreSQL client using pgxpool.
-// It performs connection pooling, health checks, and timeouts.
-func NewClient(cfg Config) (*Client, error) {
+// performs connection pooling, health checks, and timeouts.
+func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s&TimeZone=UTC",
 		cfg.User,
@@ -36,10 +32,6 @@ func NewClient(cfg Config) (*Client, error) {
 		cfg.DBName,
 		cfg.SSLMode,
 	)
-
-	// Add connection timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -62,7 +54,6 @@ func NewClient(cfg Config) (*Client, error) {
 	return &Client{Pool: pool}, nil
 }
 
-// Close gracefully shuts down the connection pool.
 func (c *Client) Close() {
 	if c.Pool != nil {
 		c.Pool.Close()

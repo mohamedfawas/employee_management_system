@@ -1,3 +1,8 @@
+// @title Employee Management API
+// @version 1.0
+// @description REST API for Employee Management
+// @host localhost:8080	
+// @BasePath /api/v1
 package main
 
 import (
@@ -13,23 +18,20 @@ import (
 )
 
 func main() {
-	// Load config path from environment or use default
+
 	cfgPath := os.Getenv("CONFIG_PATH")
 	if cfgPath == "" {
-		cfgPath = "" // Empty string means use defaults/env vars only
+		cfgPath = ""
 	}
 
-	// Load configuration
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
 		log.Fatalf("[SERVER] Failed to load config: %v", err)
 	}
 
-	// Create context with signal handling for graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Initialize server
 	srv, err := app.NewServer(ctx, cfg)
 	if err != nil {
 		log.Fatalf("[SERVER] Failed to create server: %v", err)
@@ -50,7 +52,6 @@ func main() {
 	// Wait for shutdown signal
 	<-ctx.Done()
 
-	// Graceful shutdown
 	log.Println("[SERVER] Shutting down server...")
 	if err := srv.Stop(context.Background()); err != nil {
 		log.Printf("[SERVER] Error during server shutdown: %v", err)

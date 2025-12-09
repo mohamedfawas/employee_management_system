@@ -20,7 +20,7 @@ type Client struct {
 	Client *redis.Client
 }
 
-func NewClient(cfg Config) (*Client, error) {
+func NewClient(ctx context.Context, cfg Config) (*Client, error) {
 	var opts *redis.Options
 	var err error
 
@@ -41,11 +41,10 @@ func NewClient(cfg Config) (*Client, error) {
 
 	client := redis.NewClient(opts)
 
-	// Health check
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	healthCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	if err := client.Ping(ctx).Err(); err != nil {
+	if err := client.Ping(healthCtx).Err(); err != nil {
 		return nil, fmt.Errorf("failed to ping redis: %w", err)
 	}
 

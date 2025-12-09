@@ -9,17 +9,24 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	_ "github.com/mohamedfawas/employee_management_system/docs"
+	cacheadapter "github.com/mohamedfawas/employee_management_system/internal/adapter/cache"
+	postgresAdapter "github.com/mohamedfawas/employee_management_system/internal/adapter/db"
 	"github.com/mohamedfawas/employee_management_system/internal/config"
+	httpRouter "github.com/mohamedfawas/employee_management_system/internal/delivery/http"
+	customMiddleware "github.com/mohamedfawas/employee_management_system/internal/delivery/http/middleware"
+	v1 "github.com/mohamedfawas/employee_management_system/internal/delivery/http/v1"
+	employeeUsecase "github.com/mohamedfawas/employee_management_system/internal/usecase"
 	redisClient "github.com/mohamedfawas/employee_management_system/pkg/cache"
 	"github.com/mohamedfawas/employee_management_system/pkg/constants"
 	postgresClient "github.com/mohamedfawas/employee_management_system/pkg/database/postgres"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Server struct {
 	config     *config.Config
 	httpServer *http.Server
 
-	// Database clients
 	postgresClient *postgresClient.Client
 	redisClient    *redisClient.Client
 }
@@ -29,27 +36,28 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		config: cfg,
 	}
 
-	// Initialize database clients first
 	if err := server.initClients(ctx); err != nil {
 		return nil, fmt.Errorf("failed to initialize clients: %w", err)
 	}
 
-	// Initialize Echo
 	e := echo.New()
 	e.HideBanner = true
 
-	// Set production mode
 	if cfg.Environment == constants.EnvProduction {
 		e.Debug = false
 	}
 
-	// Setup middleware
 	setupMiddleware(e)
 
-	// Setup routes
-	setupRoutes(e, server)
+	//  Swagger UI endpoint
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	// Create HTTP server
+	employeeRepo := postgresAdapter.NewEmployeeRepository(server.postgresClient.Pool)
+	redisAdapter := cacheadapter.NewRedisAdapter(server.redisClient)
+	employeeUsecase := employeeUsecase.NewEmployeeUsecase(employeeRepo, redisAdapter)
+	employeeHandler := v1.NewEmployeeHandler(employeeUsecase)
+	httpRouter.RegisterRoutes(e, employeeHandler)
+
 	server.httpServer = &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.HTTP.Port),
 		Handler:      e,
@@ -61,9 +69,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	return server, nil
 }
 
-// initClients initializes PostgreSQL and Redis clients
 func (s *Server) initClients(ctx context.Context) error {
-	// Initialize PostgreSQL client
 	postgresCfg := postgresClient.Config{
 		Host:     s.config.Postgres.Host,
 		Port:     s.config.Postgres.Port,
@@ -73,13 +79,12 @@ func (s *Server) initClients(ctx context.Context) error {
 		SSLMode:  s.config.Postgres.SSLMode,
 	}
 
-	pgClient, err := postgresClient.NewClient(postgresCfg)
+	pgClient, err := postgresClient.NewClient(ctx, postgresCfg)
 	if err != nil {
 		return fmt.Errorf("failed to initialize PostgreSQL client: %w", err)
 	}
 	s.postgresClient = pgClient
 
-	// Initialize Redis client
 	redisCfg := redisClient.Config{
 		Host:     s.config.Redis.Host,
 		Port:     s.config.Redis.Port,
@@ -87,7 +92,7 @@ func (s *Server) initClients(ctx context.Context) error {
 		DB:       s.config.Redis.DB,
 	}
 
-	rdClient, err := redisClient.NewClient(redisCfg)
+	rdClient, err := redisClient.NewClient(ctx, redisCfg)
 	if err != nil {
 		return fmt.Errorf("failed to initialize Redis client: %w", err)
 	}
@@ -96,49 +101,18 @@ func (s *Server) initClients(ctx context.Context) error {
 	return nil
 }
 
-// setupMiddleware configures Echo middleware
 func setupMiddleware(e *echo.Echo) {
+	e.Use(customMiddleware.RequestIDMiddleware())
 	e.Use(middleware.Recover())
 	e.Use(middleware.Logger())
 	e.Use(middleware.CORS())
 }
 
-// setupRoutes configures all HTTP routes
-func setupRoutes(e *echo.Echo, s *Server) {
-	// Health check endpoint
-	e.GET("/health", func(c echo.Context) error {
-		if !s.isReady() {
-			return c.JSON(http.StatusServiceUnavailable, map[string]string{
-				"status": "unhealthy",
-				"error":  "dependencies not ready",
-			})
-		}
-		return c.JSON(http.StatusOK, map[string]string{
-			"status": "healthy",
-		})
-	})
-
-	// API v1 routes
-	v1 := e.Group("/api/v1")
-	{
-		// Add your routes here
-		_ = v1 // placeholder to avoid unused variable
-	}
-}
-
-// isReady checks if all dependencies are initialized
-func (s *Server) isReady() bool {
-	return s.postgresClient != nil && s.redisClient != nil
-}
-
-// Start starts the HTTP server
 func (s *Server) Start() error {
 	return s.httpServer.ListenAndServe()
 }
 
-// Stop gracefully shuts down the server
 func (s *Server) Stop(ctx context.Context) error {
-	// Close database connections
 	if s.postgresClient != nil {
 		s.postgresClient.Close()
 	}
@@ -149,7 +123,6 @@ func (s *Server) Stop(ctx context.Context) error {
 		}
 	}
 
-	// Shutdown HTTP server
 	shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
